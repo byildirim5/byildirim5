@@ -1,0 +1,143 @@
+import sys;
+import powerfactory as pf
+
+app = pf.GetApplication()
+app.ClearOutputWindow()
+
+prj = app.GetActiveProject()
+filename = prj.GetAttribute("loc_name")
+
+LF = app.GetFromStudyCase("ComLdf")
+LF.Execute()
+
+import openpyxl as xl
+from openpyxl.chart import LineChart, Reference
+filePath='C:\\Users\\bbyildirim\\Desktop\\loadFlowResults.xlsx'
+
+buses = app.GetCalcRelevantObjects('*.ElmTerm')
+lines = app.GetCalcRelevantObjects('*.ElmLne')
+transformers2w = app.GetCalcRelevantObjects('*.ElmTr2')
+transformers3w = app.GetCalcRelevantObjects('*.ElmTr3')
+
+# Terminals
+wb1 = xl.Workbook()
+ws1 = wb1.active
+ws1.title = 'pfResults'
+
+ws1['A1'] = 'Terminal'
+ws1['B1'] = 'Name'
+ws1['C1'] = 'V (p.u.)'
+  
+i = 0
+
+for bus in buses:
+  i += 1
+
+  nameBus = bus.GetAttribute("loc_name")
+  
+  if hasattr(bus,'m:u') == True:   
+   V = bus.GetAttribute("m:u")
+  elif hasattr(bus,'m:u') == False:
+   continue 
+    
+  ws1.cell(row = 1+i, column = 1).value = i
+  ws1.cell(row = 1+i, column = 2).value = nameBus
+  ws1.cell(row = 1+i, column = 3).value = V
+
+wb1.save(filePath)
+
+# Lines
+wb2 = xl.load_workbook(filePath)
+ws2 = wb2.active
+
+ws2['E1'] = 'Line'
+ws2['F1'] = 'Name'
+ws2['G1'] = 'Loading (%)'
+ws2['H1'] = 'bus1'
+ws2['I1'] = 'bus2'
+
+j = 0
+
+for line in lines:
+  j += 1
+
+  nameLine = line.GetAttribute("loc_name")
+  
+  if hasattr(line,'c:loading') == True: 
+    loadingLne = line.GetAttribute("c:loading")
+    gr1 = line.GetAttribute("bus1")
+    gr2 = line.GetAttribute("bus2")
+  elif hasattr(line,'c:loading') == False:
+   continue
+  
+  app.PrintPlain("%s is loaded with %.2f percent" %(line, loadingLne))
+
+  ws2.cell(row = 1+j, column = 5).value = j
+  ws2.cell(row = 1+j, column = 6).value = nameLine
+  ws2.cell(row = 1+j, column = 7).value = loadingLne
+  ws2.cell(row = 1+j, column = 8).value = gr1
+  ws2.cell(row = 1+j, column = 9).value = gr2
+
+wb2.save(filePath)
+
+# 2W TR
+wb3 = xl.load_workbook(filePath)
+ws3 = wb3.active
+
+ws3['K1'] = '2W Transformer'
+ws3['L1'] = 'Name'
+ws3['M1'] = 'Loading (%)'
+ws3['N1'] = 'HV terminal'
+
+k = 0
+
+for trafo2 in transformers2w:
+  k += 1
+
+  nameTrafo2 = trafo2.GetAttribute("loc_name")
+  
+  if hasattr(trafo2,'c:loading') == True: 
+    loadingTR2 = trafo2.GetAttribute("c:loading")
+    gr3 = trafo2.GetAttribute("bushv")
+  elif hasattr(trafo2,'c:loading') == False:
+   continue
+  
+  app.PrintPlain("%s is loaded with %.2f percent" %(trafo2, loadingTR2))
+
+  ws3.cell(row = 1+k, column = 11).value = k
+  ws3.cell(row = 1+k, column = 12).value = nameTrafo2
+  ws3.cell(row = 1+k, column = 13).value = loadingTR2
+  ws3.cell(row = 1+k, column = 14).value = gr3
+  
+wb3.save(filePath)
+
+# 3W TR
+wb4 = xl.load_workbook(filePath)
+ws4 = wb4.active
+
+ws4['P1'] = '3W Transformer'
+ws4['Q1'] = 'Name'
+ws4['R1'] = 'Loading (%)'
+ws4['S1'] = 'HV terminal'
+
+m = 0
+
+for trafo3 in transformers3w:
+  m += 1
+
+  nameTrafo3 = trafo3.GetAttribute("loc_name")
+  
+  if hasattr(trafo3,'c:loading') == True: 
+    loadingTR3 = trafo3.GetAttribute("c:loading")
+    gr4 = trafo3.GetAttribute("bushv")
+  elif hasattr(trafo3,'c:loading') == False:
+   continue
+  
+  app.PrintPlain("%s is loaded with %.2f percent" %(trafo3, loadingTR3))
+
+  ws4.cell(row = 1+m, column = 16).value = m
+  ws4.cell(row = 1+m, column = 17).value = nameTrafo3
+  ws4.cell(row = 1+m, column = 18).value = loadingTR3
+  ws4.cell(row = 1+m, column = 19).value = gr4
+  
+wb4.save(filePath)
